@@ -1,0 +1,8 @@
+{
+  "python.defaultInterpreterPath": "/opt/conda/bin/python",
+  "python.languageServer": "Pylance",
+  "jupyter.intellisenseMode": "pylance",
+  "python.analysis.useLibraryCodeForTypes": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.extraPaths": ["/usr/local/spark/python"]
+}
