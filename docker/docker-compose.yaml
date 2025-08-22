@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  jupyter:
+    build: .
+    image: my/jupyter-spark:lsp
+    container_name: jupyter-spark
+    restart: unless-stopped
+    ports:
+      - "8888:8888"              # Jupyter
+      - "4040-4050:4040-4050"    # Spark UIs (jobs may use 4040+)
+    volumes:
+      - ./work:/home/jovyan/work
+      - ./data:/home/jovyan/data
+      - ./spark/conf:/usr/local/spark/conf
+      - ~/.ssh:/home/jovyan/.ssh 
+      # If you prefer AWS CLI creds instead of an instance role, uncomment:
+      # - ~/.aws:/home/jovyan/.aws:ro
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      NB_UID: "${NB_UID}"
+      NB_GID: "${NB_GID}"
+
+      # Optional Spark defaults (tune as needed):
+      # SPARK_OPTS: "--driver-memory 4g --executor-emory 4g"
+      # GRANT_SUDO: "yes"   
+    user: "${NB_UID}:${NB_GID}"     
+    env_file:
+      - .env                     # to supply JUPYTER_TOKEN (and optional AWS_* vars)
+    command: >
+      start-notebook.sh
+      --ServerApp.ip=0.0.0.0
+      --ServerApp.open_browser=False
+      --ServerApp.token=${JUPYTER_TOKEN}
+    # Healthcheck so you know the server is really up
