@@ -1,35 +1,28 @@
-version: "3.9"
-
 services:
-  jupyter:
+  spark-jupyter:
     build: .
-    image: my/jupyter-spark:lsp
-    container_name: jupyter-spark
+    image: my/apache-spark-jupyter:3.5.1
+    container_name: spark-jupyter
     restart: unless-stopped
+
+    # Safer on EC2: bind to localhost; SSH tunnel from your laptop
     ports:
-      - "8888:8888"              # Jupyter
-      - "4040-4050:4040-4050"    # Spark UIs (jobs may use 4040+)
+      - "127.0.0.1:8888:8888"
+      - "127.0.0.1:4040-4050:4040-4050"
+
+    environment:
+      JUPYTER_TOKEN: "${JUPYTER_TOKEN:-letmein}"
+      # If NOT using an EC2 IAM role, you can use envs or mount ~/.aws:
+      # AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      # AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      # AWS_SESSION_TOKEN: "${AWS_SESSION_TOKEN}"
+      # AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-ap-south-1}"
+
+    user: "1000:1000"   # match the jovyan user we created
     volumes:
       - ./work:/home/jovyan/work
-      - ./data:/home/jovyan/data
-      - ./spark/conf:/usr/local/spark/conf
-      - ~/.ssh:/home/jovyan/.ssh 
-      # If you prefer AWS CLI creds instead of an instance role, uncomment:
+      # Uncomment if NOT using IAM role (to pass credentials):
       # - ~/.aws:/home/jovyan/.aws:ro
-    environment:
-      JUPYTER_ENABLE_LAB: "yes"
-      NB_UID: "${NB_UID}"
-      NB_GID: "${NB_GID}"
 
-      # Optional Spark defaults (tune as needed):
-      # SPARK_OPTS: "--driver-memory 4g --executor-emory 4g"
-      # GRANT_SUDO: "yes"   
-    user: "${NB_UID}:${NB_GID}"     
     env_file:
-      - .env                     # to supply JUPYTER_TOKEN (and optional AWS_* vars)
-    command: >
-      start-notebook.sh
-      --ServerApp.ip=0.0.0.0
-      --ServerApp.open_browser=False
-      --ServerApp.token=${JUPYTER_TOKEN}
-    # Healthcheck so you know the server is really up
+      - .env

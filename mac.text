@@ -1,0 +1,5 @@
+abhikashyap10@Mac-mini ~ % ssh -N \
+  -L 127.0.0.1:8889:127.0.0.1:8888 \
+  -L 127.0.0.1:4041:127.0.0.1:4040 \
+  mark
+http://localhost:8889/lab/
