@@ -1,8 +1,16 @@
 {
-  "python.defaultInterpreterPath": "/opt/conda/bin/python",
+  "python.defaultInterpreterPath": "/usr/bin/python3",
   "python.languageServer": "Pylance",
   "jupyter.intellisenseMode": "pylance",
   "python.analysis.useLibraryCodeForTypes": true,
   "python.analysis.typeCheckingMode": "basic",
-  "python.analysis.extraPaths": ["/usr/local/spark/python"]
+  "python.analysis.extraPaths": [
+    "/opt/spark/python",
+    "/opt/spark/python/lib/py4j-0.10.9.7-src.zip"
+  ],
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": false
+  }
 }

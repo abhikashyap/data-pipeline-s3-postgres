@@ -1,0 +1,3 @@
+pycryptodomex
+pycryptodome
+loguru
