@@ -1,0 +1,14 @@
+pkill -9 -f '.vscode-server' || true
+pkill -9 -f 'extensions/node' || true
+sleep 1
+
+chmod -R u+rwX ~/.vscode-server ~/.cache/ms-python ~/.cache/ms-toolsai 2>/dev/null || true
+
+find ~/.vscode-server -mindepth 1 -exec rm -rf {} + 2>/dev/null || true
+rm -rf ~/.cache/ms-python ~/.cache/ms-toolsai 2>/dev/null || true
+
+if still complain
+mv ~/.vscode-server ~/.vscode-server.bak.$(date +%s)
+docker exec -u 0 -it spark-jupyter bash
+rm -rf /home/jovyan/.vscode-server /home/jovyan/.cache/ms-python /home/jovyan/.cache/ms-toolsai
+exit

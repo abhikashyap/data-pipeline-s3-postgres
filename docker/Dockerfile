@@ -15,12 +15,7 @@ RUN pip3 install --no-cache-dir \
       jupyterlab \
       boto3 \
       psycopg2-binary \
-      jupyterlab-lsp \
-      python-lsp-server \
-      python-lsp-black \
-      python-lsp-ruff \
-      pylsp-mypy \
-      pylsp-rope
+      
 
 ENV SPARK_HOME=/opt/spark
 ENV PATH=${SPARK_HOME}/bin:${PATH}
