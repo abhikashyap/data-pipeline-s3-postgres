@@ -20,7 +20,7 @@ services:
 
     user: "1000:1000"   # match the jovyan user we created
     volumes:
-      - ./work:/home/jovyan/work
+      - /home/ec2-user/spark/work/data-pipeline-s3-postgres/src:/home/jovyan/work:Z
       # Uncomment if NOT using IAM role (to pass credentials):
       # - ~/.aws:/home/jovyan/.aws:ro
 

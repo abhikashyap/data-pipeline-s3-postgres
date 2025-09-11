@@ -27,6 +27,14 @@ ENV PATH=${SPARK_HOME}/bin:${PATH}
 # NOTE: do NOT override JAVA_HOME — the base image already sets it correctly.
 
 # Add S3 + Postgres jars directly into Spark's classpath
+# RUN mkdir -p ${SPARK_HOME}/jars-extra && \
+#     curl -fsSL -o ${SPARK_HOME}/jars-extra/hadoop-aws-3.3.4.jar \
+#       https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar && \
+#     curl -fsSL -o ${SPARK_HOME}/jars-extra/aws-java-sdk-bundle-1.12.262.jar \
+#       https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar && \
+#     curl -fsSL -o ${SPARK_HOME}/jars-extra/postgresql-42.6.0.jar \
+#       https://jdbc.postgresql.org/download/postgresql-42.6.0.jar && \
+#     cp -v ${SPARK_HOME}/jars-extra/*.jar ${SPARK_HOME}/jars/
 RUN mkdir -p ${SPARK_HOME}/jars-extra && \
     curl -fsSL -o ${SPARK_HOME}/jars-extra/hadoop-aws-3.3.4.jar \
       https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar && \
@@ -34,7 +42,10 @@ RUN mkdir -p ${SPARK_HOME}/jars-extra && \
       https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar && \
     curl -fsSL -o ${SPARK_HOME}/jars-extra/postgresql-42.6.0.jar \
       https://jdbc.postgresql.org/download/postgresql-42.6.0.jar && \
+    curl -fsSL -o ${SPARK_HOME}/jars-extra/RedshiftJDBC42-2.1.0.27.jar \
+      https://repo1.maven.org/maven2/com/amazon/redshift/redshift-jdbc42/2.1.0.27/redshift-jdbc42-2.1.0.27.jar && \
     cp -v ${SPARK_HOME}/jars-extra/*.jar ${SPARK_HOME}/jars/
+
 
 # Default Spark config for S3A (adjust region if needed)
 RUN mkdir -p ${SPARK_HOME}/conf && \

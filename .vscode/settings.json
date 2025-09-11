@@ -1,7 +1,5 @@
 {
   "python.defaultInterpreterPath": "/usr/bin/python3",
-  "python.languageServer": "Pylance",
-  "jupyter.intellisenseMode": "pylance",
   "python.analysis.useLibraryCodeForTypes": true,
   "python.analysis.typeCheckingMode": "basic",
   "python.analysis.extraPaths": [

@@ -1,0 +1,90 @@
+services:
+  spark-jupyter:
+    build: .
+    image: my/apache-spark-jupyter:3.5.1
+    container_name: spark-jupyter
+    restart: unless-stopped
+
+    # Safer on EC2: bind to localhost; SSH tunnel from your laptop
+    ports:
+      - "127.0.0.1:8888:8888"
+      - "127.0.0.1:4040-4050:4040-4050"
+
+    environment:
+      JUPYTER_TOKEN: "${JUPYTER_TOKEN:-letmein}"
+      # If NOT using an EC2 IAM role, you can use envs or mount ~/.aws:
+      # AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      # AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      # AWS_SESSION_TOKEN: "${AWS_SESSION_TOKEN}"
+      # AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-ap-south-1}"
+
+    user: "1000:1000"   # match the jovyan user we created
+    volumes:
+      - ./work:/home/jovyan/work
+      # Uncomment if NOT using IAM role (to pass credentials):
+      # - ~/.aws:/home/jovyan/.aws:ro
+
+    env_file:
+      - .env
+# services:
+#   spark-jupyter:
+#     build: .
+#     image: my/apache-spark-jupyter:3.5.1
+#     container_name: spark-jupyter
+#     restart: unless-stopped
+#     ports:
+#       - "127.0.0.1:8888:8888"
+#       - "127.0.0.1:4040-4050:4040-4050"
+#     environment:
+#       JUPYTER_TOKEN: "${JUPYTER_TOKEN:-letmein}"
+#     user: "1000:1000"
+#     volumes:
+#       - ./work:/home/jovyan/work
+#     env_file:
+#       - .env
+#     depends_on:
+#       - clickhouse   # 👈 Spark waits for ClickHouse container
+
+#   clickhouse:
+#     image: clickhouse/clickhouse-server:23.8
+#     container_name: clickhouse
+#     restart: unless-stopped
+#     ports:
+#       - "8123:8123"   # HTTP interface
+#       - "9000:9000"   # Native TCP interface
+#     volumes:
+#       - ./clickhouse_data:/var/lib/clickhouse   # persist data
+#       - ./clickhouse_logs:/var/log/clickhouse-server
+# services:
+#   spark-jupyter:
+#     build: .
+#     image: my/apache-spark-jupyter:3.5.1
+#     container_name: spark-jupyter
+#     restart: unless-stopped
+#     ports:
+#       - "8888:8888"       # Jupyter Lab
+#       - "4040-4050:4040-4050"   # Spark UIs
+#       - "7077:7077"       # Spark master (needed for host → container)
+#       - "6066:6066"       # (optional) Spark REST API
+#     volumes:
+#       - ./work:/home/jovyan/work
+#       # - vscode_data:/home/jovyan/.vscode-server 
+#     environment:
+#       JUPYTER_TOKEN: letmein
+#     user: "1000:1000"
+#     depends_on:
+#       - clickhouse
+
+#   clickhouse:
+#     image: clickhouse/clickhouse-server:23.8
+#     container_name: clickhouse
+#     restart: unless-stopped
+#     ports:
+#       - "8123:8123"   # HTTP
+#       - "9000:9000"   # Native TCP
+#     volumes:
+#       - ./clickhouse_data:/var/lib/clickhouse
+#       - ./clickhouse_logs:/var/log/clickhouse-server
+
+# volumes:
+#   vscode_data:
