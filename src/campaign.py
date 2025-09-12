@@ -1,26 +1,27 @@
+ip='172.31.19.202'
+db='amazon_sp_api'
+password='Techblooprint123'
+user="blooprint"
 from pyspark.sql import SparkSession
 import os
-from pyspark.sql.functions import broadcast
+from clickhouse_driver import Client
 
 spark = SparkSession.builder \
     .appName("BigCSVWrite") \
     .config("spark.driver.memory", "5g") \
-    .config("spark.executor.memory", "4g") \
-    .config("spark.sql.shuffle.partitions", "20") \
+    .config("spark.executor.memory", "6g") \
     .getOrCreate()
-
+spark.conf.set("spark.sql.adaptive.enabled", "true")
+spark.conf.set("spark.sql.shuffle.partitions", "50")
 from pyspark.sql import SparkSession
 from pyspark.sql import DataFrame  # or: from pyspark.sql.dataframe import DataFrame
 from pyspark.sql import functions as F, types as T
 from pyspark.sql import SparkSession
 spark = SparkSession.builder.getOrCreate()
-
+from pyspark.sql.functions import broadcast
+from pyspark.sql import functions as F
 # Should not raise:
 spark.sparkContext._jvm.java.lang.Class.forName("org.postgresql.Driver")
-ip='172.31.19.202'
-db='amazon_sp_api'
-password='Techblooprint123'
-user="blooprint"
 
 URL  = os.getenv("PG_JDBC_URL", f"jdbc:postgresql://{ip}:5433/{db}")
 USER = os.getenv("PG_USER", user)
@@ -325,7 +326,7 @@ keyword_df=keyword_df.select('account_name',
  'new_match_type',
  'strategy')
 
-from pyspark.sql import functions as F
+
 
 target_df = (
     targets
@@ -360,7 +361,8 @@ target_df = (
 ads_df=(ads_df.select(
     F.col("campaignId").alias("campaign_id"),
     F.col("adProduct").alias("ad_product"),
-    F.col("adType").alias("ad_type")
+    F.col("adType").alias("ad_type"),
+    F.col("state").alias("CAMP STATUS")
 ).dropDuplicates()
 .withColumn("ads_type",
     F.when(F.col("ad_product")=="SPONSORED_PRODUCTS","SP")
@@ -372,33 +374,14 @@ ads_df=(ads_df.select(
     .when((F.col("ad_product")=="SPONSORED_DISPLAY")&(F.col("ad_type")=="VIDEO"),"SDV")
     .otherwise("Not Applicable")          
 ).select(
-    "campaign_id","ads_type"
+    "campaign_id","ads_type","CAMP STATUS"
 )
 )
 
-camp_strategy=(
-    keyword_df
-    .groupBy("campaignId")
-    .agg(
-        F.sum(F.when(F.col("strategy") == "GENERIC", 1).otherwise(0)).alias("generic_count"),
-        F.sum(F.when(F.col("strategy") == "BA", 1).otherwise(0)).alias("ba_count"),
-        F.sum(F.when(F.col("strategy") == "BD", 1).otherwise(0)).alias("bd_count"),
-        F.count("*").alias("total_count")
-    )
-    .withColumn(
-        "strategy_camp",
-        F.when(F.col("generic_count") > 0, F.lit("GENERIC"))
-         .when((F.col("ba_count") == F.col("total_count")), F.lit("BA"))
-         .when((F.col("bd_count") == F.col("total_count")), F.lit("BD"))
-         .otherwise(F.lit("Not Applicable"))
-    ).dropDuplicates()
-    .select("campaignId", "strategy_camp").withColumnRenamed("campaignId","campaign_id")
-)
 ads_df = ads_df.dropDuplicates(["campaign_id"])
 
 target_df = target_df.dropDuplicates(["campaign_id"])
 
-camp_strategy = camp_strategy.dropDuplicates(["campaign_id"])
 
 portfolio_mapping = portfolio_mapping.dropDuplicates(["campaign_id"])
 
@@ -407,12 +390,6 @@ campaign_info = (
     target_df
     .join(ads_df, on="campaign_id", how="outer")
     .withColumnRenamed("target_group", "targeting_type")
-    .join(camp_strategy, on="campaign_id", how="outer")
-    .withColumn(
-        "strategy_camp",
-        F.when(F.col("strategy_camp").isNull(), F.lit("Not Applicable"))
-         .otherwise(F.col("strategy_camp"))
-    )
 )
 
 
@@ -425,8 +402,97 @@ keyword_df=keyword_df.join(
 
 portfolio_info=portfolio_mapping.select("portfolio_name","campaign_id",).join(campaign_info ,on ="campaign_id",how="left").withColumnRenamed("campaign_id", "campaignId")
 final_df=keyword_df.join(portfolio_info,on="campaignId",how="left")
+final_df=(
+    final_df
+    .withColumn(
+        "CPC",
+        F.when(F.col("clicks") != 0,
+               F.round(F.col("ad_spend") / F.col("clicks"), 0)
+        ).otherwise(F.lit(0))
+    )
+    .withColumn(
+        "ROI",
+        F.when(F.col("ad_spend") != 0,
+               F.round(F.col("ads_sale") / F.col("ad_spend"), 0)
+        ).otherwise(F.lit(0))
+    )
+    .withColumn(
+        "ACOS",
+        F.when(F.col("ads_sale") != 0,
+               F.round((F.col("ad_spend") * 100) / F.col("ads_sale"), 0)
+        ).otherwise(F.lit(0))
+    )
+    .withColumn(
+        "CVR",
+        F.when(F.col("clicks") != 0,
+               F.round((F.col("ads_units") * 100) / F.col("clicks"), 0)
+        ).otherwise(F.lit(0))
+    )
+)
+final_df=(
+    final_df
+    .withColumnRenamed("account_name", "ACCOUNT NAME")
+    .withColumnRenamed("date", "DATE")
+    .withColumnRenamed("portfolio_name", "PORTFOLIOS")
+    .withColumnRenamed("campaign_name", "CAMPAIGNS")
+    .withColumnRenamed("ad_group_name", "AD GRP")
+    # CAMP STATUS not present in final_df, will need join (skip for now)
+    .withColumnRenamed("ads_type", "ADS TYP")
+    .withColumnRenamed("strategy", "STRATEGY")
+    .withColumn(
+        "MATCH TYP",
+        F.when(F.lower(F.col("new_match_type")) == "close-match", "CLOSE")
+         .when(F.lower(F.col("new_match_type")) == "complements", "COMP")
+         .when(F.lower(F.col("new_match_type")) == "substitutes", "SUB")
+         .when(F.lower(F.col("new_match_type")) == "loose-match", "LOOSE")
+         .otherwise(F.col("new_match_type"))
+    )
+    .withColumnRenamed("targeting_type", "TARGETING TYP")
+    .withColumnRenamed("keyword_id", "keyword_id")
+    .withColumnRenamed("keyword", "KEYWORD")
+    .withColumnRenamed("search_term", "SEARCH TERM")
+    .withColumnRenamed("bid", "bid")
+    .withColumnRenamed("bid_tym", "BID TYM")
+    .withColumnRenamed("ad_spend", "SPEND")
+    .withColumnRenamed("ads_sale", "SALES")
+    .withColumnRenamed("ads_units", "UNITS")
+    .withColumnRenamed("clicks", "CLICKS")
+    .withColumnRenamed("CPC", "CPC")
+    .withColumnRenamed("ROI", "ROI")
+    .withColumnRenamed("ACOS", "ACOS")
+    .withColumnRenamed("CVR", "CVR")
+    .withColumnRenamed("impressions", "IMPRSN")
+    .withColumnRenamed("campaignId", "campaign_id")
+    .withColumnRenamed("ad_group_id", "ad_group_id")
+)
+final_df=final_df.drop("ne_match_type","match_type")
+
+final_df=final_df.fillna({"CPC": 0,
+                "SPEND":0,
+                 "SALES":0,
+                 "UNITS":0,
+                 "CLICKS":0,
+                 "CPC":0,
+                 "ROI":0,
+                 "CVR":0,
+                 "IMPRSN":0,
+                  "bid":0
+                })
+dummy_df=final_df.filter(F.col("ACCOUNT NAME") == 'awenest')
+from pyspark.sql import functions as F
+
+pattern = r"(?i)\bawenest\b"   
+string_cols = [c for c, t in final_df.dtypes if t == "string"]
+
+dummy_df = dummy_df.select([
+    F.regexp_replace(F.col(c), pattern, "Dummy").alias(c) if c in string_cols else F.col(c)
+    for c, _ in final_df.dtypes
+])
+out_df=final_df.unionByName(dummy_df)
+
+
 (
-    final_df.write
+    out_df.write
     .format("jdbc")
     .option("url", URL)
     .option("user", USER)
