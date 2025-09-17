@@ -488,7 +488,77 @@ dummy_df = dummy_df.select([
     F.regexp_replace(F.col(c), pattern, "Dummy").alias(c) if c in string_cols else F.col(c)
     for c, _ in final_df.dtypes
 ])
-out_df=final_df.unionByName(dummy_df)
+from pyspark.sql.window import Window
+
+# Step 1: Rename columns with spaces to safe names
+df = dummy_df.withColumnRenamed("AD GRP", "AD_GRP")
+
+# --- PORTFOLIOS ---
+w_portfolio = Window.orderBy("PORTFOLIOS")
+portfolio_map = (
+    df.select("PORTFOLIOS").distinct()
+      .withColumn("PORTFOLIOS_NEW", F.concat(F.lit("portfolio"), F.dense_rank().over(w_portfolio)))
+)
+df = df.join(portfolio_map, on="PORTFOLIOS", how="left").drop("PORTFOLIOS").withColumnRenamed("PORTFOLIOS_NEW", "PORTFOLIOS")
+
+# --- CAMPAIGNS ---
+w_campaign = Window.partitionBy("PORTFOLIOS").orderBy("CAMPAIGNS")
+campaign_map = (
+    df.select("PORTFOLIOS", "CAMPAIGNS").distinct()
+      .withColumn("CAMPAIGNS_NEW", F.concat(F.lit("campaign"), F.dense_rank().over(w_campaign)))
+)
+df = df.join(campaign_map, on=["PORTFOLIOS", "CAMPAIGNS"], how="left").drop("CAMPAIGNS").withColumnRenamed("CAMPAIGNS_NEW", "CAMPAIGNS")
+
+# --- AD GROUPS ---
+w_adgroup = Window.partitionBy("PORTFOLIOS", "CAMPAIGNS").orderBy("AD_GRP")
+adgroup_map = (
+    df.select("PORTFOLIOS", "CAMPAIGNS", "AD_GRP").distinct()
+      .withColumn("AD_GRP_NEW", F.concat(F.lit("adgroup"), F.dense_rank().over(w_adgroup)))
+)
+df = df.join(adgroup_map, on=["PORTFOLIOS", "CAMPAIGNS", "AD_GRP"], how="left").drop("AD_GRP").withColumnRenamed("AD_GRP_NEW", "AD_GRP")
+
+# --- KEYWORDS ---
+w_keyword = Window.partitionBy("PORTFOLIOS", "CAMPAIGNS", "AD_GRP").orderBy("KEYWORD")
+keyword_map = (
+    df.select("PORTFOLIOS", "CAMPAIGNS", "AD_GRP", "KEYWORD").distinct()
+      .withColumn("KEYWORD_NEW", F.concat(F.lit("keyword"), F.dense_rank().over(w_keyword)))
+)
+df = df.join(keyword_map, on=["PORTFOLIOS", "CAMPAIGNS", "AD_GRP", "KEYWORD"], how="left").drop("KEYWORD").withColumnRenamed("KEYWORD_NEW", "KEYWORD")
+
+# Step 2: Rename AD_GRP back to "AD GRP"
+df = df.withColumnRenamed("AD_GRP", "AD GRP")
+cols_to_multiply = ["IMPRSN", "CLICKS", "SPEND", "SALES", "UNITS"]
+
+for c in cols_to_multiply:
+    df = df.withColumn(c, F.col(c)* 5)
+df=(
+    df
+    .withColumn(
+        "CPC",
+        F.when(F.col("CLICKS") != 0,
+               F.round(F.col("SPEND") / F.col("CLICKS"), 0)
+        ).otherwise(F.lit(0))
+    )
+    .withColumn(
+        "ROI",
+        F.when(F.col("SPEND") != 0,
+               F.round(F.col("SALES") / F.col("SPEND"), 0)
+        ).otherwise(F.lit(0))
+    )
+    .withColumn(
+        "ACOS",
+        F.when(F.col("SALES") != 0,
+               F.round((F.col("SPEND") * 100) / F.col("SALES"), 0)
+        ).otherwise(F.lit(0))
+    )
+    .withColumn(
+        "CVR",
+        F.when(F.col("CLICKS") != 0,
+               F.round((F.col("UNITS") * 100) / F.col("CLICKS"), 0)
+        ).otherwise(F.lit(0))
+    )
+)
+out_df=final_df.unionByName(df)
 
 
 (
