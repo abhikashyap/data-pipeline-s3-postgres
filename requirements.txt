@@ -3,3 +3,4 @@ clickhouse-driver
 pyspark
 loguru
 pyspark-stubs
+pygsheets
