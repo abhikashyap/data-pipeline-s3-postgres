@@ -1,15 +1,16 @@
-account_name,ratio_start,ratio_end,column_name,column_start,column_end,bid_change
-awenest,0.0,0.5,,,,10
-awenest,0.5,0.75,,,,5
-awenest,0.75,,,,,2
-awenest,0.0,0,clicks_last_14_days,5,,-50
-awenest,0.0,0,clicks_last_14_days,0,0,10
-awenest,0.0,0,clicks_last_14_days,1,5,no change
-awenest,1.0,,,,,cpc/ratio
-BeyondNxt,0.0,0.5,,,,50
-BeyondNxt,0.5,0.75,,,,25
-BeyondNxt,0.75,,,,,10
-BeyondNxt,0.0,0,clicks_last_14_days,200,,-50
-BeyondNxt,0.0,0,clicks_last_14_days,0,,50
-BeyondNxt,0.0,0,clicks_last_14_days,1,200,no change
-BeyondNxt,1.0,,,,,cpc/ratio
+account_name,1_column_filter,1_ratio_start,1_ratio_end,2_column_filter,2_column_start,3_column_end,cpc_column_name,bid_change
+awenest,,0,0.5,,,,CPC_last_14_days,10
+awenest,,0.5,0.75,,,,CPC_last_14_days,5
+awenest,,0.75,,,,,CPC_last_14_days,2
+awenest,,0,0,clicks_last_14_days,5,,CPC_last_14_days,-50
+awenest,,0,0,clicks_last_14_days,0,0,CPC_last_14_days,10
+awenest,,0,0,clicks_last_14_days,1,5,CPC_last_14_days,no change
+,,,,,,,CPC_last_14_days,
+awenest,,1,,,,,CPC_last_14_days,cpc/ratio
+BeyondNxt,,0,0.5,,,,CPC_last_14_days,50
+BeyondNxt,,0.5,0.75,,,,CPC_last_14_days,25
+BeyondNxt,,0.75,,,,,CPC_last_14_days,10
+BeyondNxt,,0,0,clicks_last_14_days,200,,CPC_last_14_days,-50
+BeyondNxt,,0,0,clicks_last_14_days,0,,CPC_last_14_days,50
+BeyondNxt,,0,0,clicks_last_14_days,1,200,CPC_last_14_days,no change
+BeyondNxt,,1,,,,,CPC_last_14_days,cpc/ratio

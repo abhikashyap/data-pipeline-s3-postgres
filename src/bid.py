@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
 
 
 ip='172.31.19.202'
@@ -9,8 +8,6 @@ db='amazon_sp_api'
 password='Techblooprint123'
 user="blooprint"
 
-
-# In[2]:
 
 
 from pyspark.sql import SparkSession

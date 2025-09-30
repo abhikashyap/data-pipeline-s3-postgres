@@ -14,7 +14,7 @@ spark = SparkSession.builder \
 spark.conf.set("spark.sql.adaptive.enabled", "true")
 spark.conf.set("spark.sql.shuffle.partitions", "50")
 from pyspark.sql import SparkSession
-from pyspark.sql import DataFrame  # or: from pyspark.sql.dataframe import DataFrame
+from pyspark.sql import DataFrame  # or: from pyspark.sql.dataframe import DataFrame 
 from pyspark.sql import functions as F, types as T
 from pyspark.sql import SparkSession
 spark = SparkSession.builder.getOrCreate()
