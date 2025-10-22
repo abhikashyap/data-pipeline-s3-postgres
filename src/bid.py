@@ -1,15 +1,8 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-
 
 ip='172.31.19.202'
 db='amazon_sp_api'
 password='Techblooprint123'
 user="blooprint"
-
-
-
 from pyspark.sql import SparkSession
 import os
 from clickhouse_driver import Client
@@ -214,8 +207,6 @@ result = (
 
 result=result.drop("campaign_name")
 
-
-# In[13]:
 
 
 result=result.select(
