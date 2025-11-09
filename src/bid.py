@@ -5,19 +5,26 @@ password='Techblooprint123'
 user="blooprint"
 from pyspark.sql import SparkSession
 import os
-from clickhouse_driver import Client
-
-spark = SparkSession.builder \
-    .appName("BigCSVWrite") \
-    .config("spark.driver.memory", "5g") \
-    .config("spark.executor.memory", "6g") \
+spark = (
+    SparkSession.builder
+    .appName("BigCSVWrite")
+    .config("spark.driver.memory", "8g")
+    .config("spark.executor.memory", "8g")
+    .config("spark.executor.memoryOverhead", "2g")
+    .config("spark.sql.adaptive.enabled", "true")
+    .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
+    .config("spark.sql.adaptive.skewJoin.enabled", "true")
+    .config("spark.sql.shuffle.partitions", "400")
+    .config("spark.default.parallelism", "400")
+    .config("spark.memory.fraction", "0.5")
+    .config("spark.memory.storageFraction", "0.3")
+    .config("spark.memory.offHeap.enabled", "true")
+    .config("spark.memory.offHeap.size", "2g")
     .getOrCreate()
-spark.conf.set("spark.sql.adaptive.enabled", "true")
-spark.conf.set("spark.sql.shuffle.partitions", "50")
-from pyspark.sql import SparkSession
+)
+
 from pyspark.sql import DataFrame  # or: from pyspark.sql.dataframe import DataFrame
 from pyspark.sql import functions as F, types as T
-from pyspark.sql import SparkSession
 spark = SparkSession.builder.getOrCreate()
 from pyspark.sql.functions import broadcast
 from pyspark.sql import functions as F
